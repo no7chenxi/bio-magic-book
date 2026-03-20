@@ -3,104 +3,125 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Genos 魔法书 | 超清晰引导版</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Genos 魔法书 | 移动端全适配版</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        @keyframes float-slow { 0%, 100% { transform: translate(0, 0); } 50% { transform: translate(15px, -15px); } }
-        @keyframes logo-glow { 0%, 100% { filter: drop-shadow(0 0 5px #22D3EE); } 50% { filter: drop-shadow(0 0 15px #22D3EE); } }
+        :root { --sat: env(safe-area-inset-top); --sab: env(safe-area-inset-bottom); }
+        @keyframes float-slow { 0%, 100% { transform: translate(0, 0); } 50% { transform: translate(10px, -10px); } }
         
-        body { background: #020617; color: #F1F5F9; margin: 0; height: 100vh; width: 100vw; overflow: hidden; font-family: 'system-ui', sans-serif; touch-action: none; }
-        #flashlight-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: radial-gradient(circle 100px at var(--x) var(--y), transparent 0%, rgba(2, 6, 23, 0.98) 100%); pointer-events: none; z-index: 50; transition: background 0.4s; }
+        body { 
+            background: #020617; color: #F1F5F9; 
+            margin: 0; height: 100dvh; width: 100vw;
+            overflow: hidden; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            touch-action: none; position: fixed; /* 防止苹果手机橡皮筋回弹 */
+        }
+
+        #flashlight-overlay { 
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+            background: radial-gradient(circle 80px at var(--x) var(--y), transparent 0%, rgba(2, 6, 23, 0.98) 100%); 
+            pointer-events: none; z-index: 50; transition: background 0.4s; 
+        }
         
-        .treasure-container { position: absolute; width: 80px; height: 80px; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; transition: all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1); animation: float-slow 10s ease-in-out infinite; z-index: 10; }
-        .treasure-icon { font-size: 2.2rem; transition: all 0.4s; filter: grayscale(1) opacity(0.15); }
-        .treasure-container.active { z-index: 60; transform: scale(2.2) translateY(-60px) !important; animation-play-state: paused; }
-        .treasure-container.active .treasure-icon { filter: grayscale(0) opacity(1) drop-shadow(0 0 20px var(--glow)) !important; }
+        .treasure-container { 
+            position: absolute; width: 60px; height: 60px; 
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            cursor: pointer; transition: all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+            animation: float-slow 10s ease-in-out infinite; z-index: 10;
+        }
+        @media (min-width: 768px) { .treasure-container { width: 90px; height: 90px; } }
+
+        .treasure-icon { font-size: 1.8rem; transition: all 0.4s; filter: grayscale(1) opacity(0.15); }
+        @media (min-width: 768px) { .treasure-icon { font-size: 2.5rem; } }
+        
+        .treasure-container.active { z-index: 60; transform: scale(2.2) translateY(-50px) !important; animation-play-state: paused; }
+        .treasure-container.active .treasure-icon { filter: grayscale(0) opacity(1) drop-shadow(0 0 15px var(--glow)) !important; }
         .treasure-container.unlocked { display: none; }
 
-        .progress-ring { position: absolute; width: 100px; height: 100px; transform: rotate(-90deg); opacity: 0; transition: opacity 0.3s; }
-        .progress-ring circle { fill: transparent; stroke: var(--glow); stroke-width: 6; stroke-dasharray: 251; stroke-dashoffset: 251; transition: stroke-dashoffset 3s linear; }
+        .progress-ring { position: absolute; width: 80px; height: 80px; transform: rotate(-90deg); opacity: 0; transition: opacity 0.3s; }
+        .progress-ring circle { fill: transparent; stroke: var(--glow); stroke-width: 5; stroke-dasharray: 251; stroke-dashoffset: 251; transition: stroke-dashoffset 3s linear; }
         .treasure-container.active .progress-ring { opacity: 1; }
         .treasure-container.loading circle { stroke-dashoffset: 0; }
 
+        /* 情报卡片：手机端固定在顶部下方，防止遮挡 */
         .info-bubble {
-            position: absolute; left: 50%; top: 110%; width: 260px; transform: translateX(-50%) scale(0.8);
-            background: rgba(15, 23, 42, 0.95); border: 3px solid var(--glow); padding: 20px; border-radius: 24px;
-            opacity: 0; visibility: hidden; transition: 0.3s; pointer-events: none; backdrop-filter: blur(10px);
+            position: fixed; left: 50%; top: calc(100px + var(--sat)); width: 85%; max-width: 320px; 
+            transform: translateX(-50%) scale(0.9);
+            background: rgba(15, 23, 42, 0.95); border: 2px solid var(--glow); padding: 15px; border-radius: 20px;
+            opacity: 0; visibility: hidden; transition: 0.3s; pointer-events: none; z-index: 100;
+            backdrop-filter: blur(10px);
         }
+        @media (min-width: 768px) { .info-bubble { position: absolute; left: 110%; top: -50%; width: 260px; transform: none; } }
         .treasure-container.active .info-bubble { opacity: 1; visibility: visible; transform: translateX(-50%) scale(1); }
 
-        #collection-shelf { position: fixed; bottom: 0; left: 0; width: 100%; height: 80px; background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(25px); border-top: 1px solid rgba(34, 211, 238, 0.2); display: flex; align-items: center; padding: 0 20px; gap: 8px; z-index: 100; overflow-x: auto; }
-        .shelf-slot { width: 35px; height: 35px; border-radius: 8px; flex-shrink: 0; background: rgba(255,255,255,0.05); border: 1px dashed rgba(34, 211, 238, 0.3); display: flex; align-items: center; justify-content: center; font-size: 1rem; opacity: 0.2; }
-        .shelf-slot.filled { background: rgba(34, 211, 238, 0.1); border-style: solid; opacity: 1; transform: scale(1.1); }
-
-        /* 顶部 Logo */
-        .magic-logo { position: fixed; top: 25px; left: 25px; z-index: 150; animation: logo-glow 3s infinite; }
-        
-        /* 右上角固定规则指引 */
-        .guide-fixed {
-            position: fixed; top: 25px; right: 25px; z-index: 150;
-            background: rgba(34, 211, 238, 0.15); border: 2px solid rgba(34, 211, 238, 0.4);
-            padding: 12px 20px; border-radius: 20px; backdrop-filter: blur(10px);
-            text-align: right;
+        /* 底部滚动地图：自动适配安全区 */
+        #map-panel {
+            position: fixed; bottom: 0; left: 0; width: 100%; height: calc(100px + var(--sab));
+            background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(20px);
+            border-top: 1px solid rgba(34, 211, 238, 0.2);
+            z-index: 100; padding: 10px 0 calc(5px + var(--sab)) 0;
         }
-        .guide-title { font-size: 14px; font-weight: 900; color: #22D3EE; margin-bottom: 4px; display: block; }
-        .guide-step { font-size: 11px; color: #E2E8F0; font-weight: bold; }
+        #collection-container {
+            display: flex; align-items: center; gap: 10px; padding: 0 20px;
+            overflow-x: auto; scroll-behavior: smooth; height: 100%;
+        }
+        #collection-container::-webkit-scrollbar { display: none; }
+        
+        .map-slot {
+            width: 45px; height: 45px; border-radius: 12px; flex-shrink: 0;
+            background: rgba(255,255,255,0.05); border: 1px dashed rgba(34, 211, 238, 0.2);
+            display: flex; align-items: center; justify-content: center; font-size: 1.2rem;
+            opacity: 0.2; transition: 0.5s;
+        }
+        .map-slot.filled { background: rgba(34, 211, 238, 0.1); border-style: solid; opacity: 1; transform: scale(1.1); }
+
+        /* 顶部 UI 适配 */
+        .header-ui { position: fixed; top: calc(15px + var(--sat)); left: 20px; right: 20px; z-index: 150; display: flex; justify-content: space-between; align-items: flex-start; pointer-events: none; }
+        .magic-logo h1 { font-size: 1.5rem; }
+        @media (min-width: 768px) { .magic-logo h1 { font-size: 2.2rem; } }
     </style>
 </head>
 <body>
     <div id="flashlight-overlay"></div>
 
-    <!-- 1. 前置规则引导页面 -->
-    <div id="sound-init" class="fixed inset-0 z-[1000] bg-[#020617] flex flex-col items-center justify-center text-center p-6 md:p-10">
-        <div class="text-7xl mb-8">🎒</div>
-        <h2 class="text-4xl font-black mb-6 italic text-cyan-400">探险准备工作</h2>
-        
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mb-12">
-            <div class="bg-white/5 p-6 rounded-3xl border border-white/10">
-                <div class="text-3xl mb-3">🔍</div>
-                <h3 class="text-xl font-bold mb-2">1. 寻找</h3>
-                <p class="text-gray-400 text-sm">移动光圈，在黑暗中寻找发光的超能力图标。</p>
-            </div>
-            <div class="bg-white/5 p-6 rounded-3xl border border-cyan-500/30">
-                <div class="text-3xl mb-3">🎯</div>
-                <h3 class="text-xl font-bold mb-2 text-cyan-400">2. 锁定</h3>
-                <p class="text-gray-400 text-sm">将圆心对准图标，并稳住手<span class="text-cyan-400 font-bold">坚持 3 秒钟</span>。</p>
-            </div>
-            <div class="bg-white/5 p-6 rounded-3xl border border-white/10">
-                <div class="text-3xl mb-3">🏛️</div>
-                <h3 class="text-xl font-bold mb-2">3. 收集</h3>
-                <p class="text-gray-400 text-sm">读完秘密后，它会自动飞进你的生命实验室！</p>
-            </div>
+    <!-- 初始化屏 -->
+    <div id="sound-init" class="fixed inset-0 z-[1000] bg-[#020617] flex flex-col items-center justify-center text-center p-8">
+        <div class="text-6xl mb-6">🪄</div>
+        <h2 class="text-3xl font-black mb-4 italic text-cyan-400">BODY MAGIC</h2>
+        <div class="space-y-4 mb-10 text-sm text-gray-400">
+            <p>1. 移动光圈寻找图标</p>
+            <p>2. 对准并稳住 <span class="text-white font-bold">3 秒钟</span></p>
+            <p>3. 收集所有的生命秘密</p>
         </div>
-
-        <button onclick="initApp()" class="px-16 py-5 bg-white text-black font-black rounded-full text-2xl shadow-[0_0_50px_rgba(255,255,255,0.3)] hover:scale-110 transition-transform">我准备好啦 GO!</button>
+        <button onclick="initApp()" class="px-12 py-4 bg-white text-black font-black rounded-full text-xl shadow-[0_0_40px_rgba(255,255,255,0.3)]">进入探险</button>
     </div>
 
-    <!-- 2. 恒久展示的 Logo -->
-    <div class="magic-logo">
-        <h1 class="text-3xl md:text-4xl font-black italic text-cyan-400 tracking-tighter">身体<span class="text-white">魔法书</span></h1>
-        <div class="flex items-center gap-2 mt-1">
-            <div class="h-1.5 w-12 bg-cyan-500 rounded-full"></div>
-            <div id="progress-val" class="text-sm font-mono text-gray-400 font-bold">0/22</div>
+    <!-- 常驻 UI 层 -->
+    <div class="header-ui">
+        <div class="magic-logo pointer-events-auto">
+            <h1 class="font-black italic text-cyan-400 tracking-tighter">身体<span class="text-white">魔法书</span></h1>
+            <div id="progress-val" class="text-xs font-mono text-gray-500 font-bold mt-1">DECODED: 0/22</div>
         </div>
-    </div>
-
-    <!-- 3. 右上角常驻规则 -->
-    <div class="guide-fixed hidden md:block">
-        <span class="guide-title">✨ 魔法秘籍</span>
-        <div class="guide-step">对准目标 ➜ <span class="text-white">稳住 3 秒</span> ➜ 收集</div>
+        <div class="text-right hidden md:block">
+            <div class="text-[10px] font-black text-cyan-500 uppercase tracking-widest">探险指南</div>
+            <div class="text-[9px] text-gray-500">对准圆心 | 稳住 3 秒 | 收集秘密</div>
+        </div>
     </div>
 
     <div id="treasure-field" class="relative w-full h-full"></div>
-    <div id="collection-shelf"></div>
+
+    <!-- 底部收集地图 -->
+    <div id="map-panel">
+        <div id="collection-container">
+            <!-- 22 Slots will be injected here -->
+        </div>
+    </div>
 
     <div id="milestone-modal" class="fixed inset-0 bg-black/95 hidden flex-col items-center justify-center z-[200] text-center p-10" onclick="this.style.display='none'">
-        <div class="text-8xl mb-6">🏆</div>
-        <h2 class="text-4xl font-black text-white mb-2 italic" id="m-title"></h2>
-        <p class="text-xl text-cyan-400 mb-8" id="m-desc"></p>
-        <button class="px-12 py-4 bg-white text-black font-black rounded-full text-xl">继续寻宝</button>
+        <div class="text-8xl mb-6">🏅</div>
+        <h2 class="text-3xl font-black text-white mb-2" id="m-title"></h2>
+        <p class="text-lg text-cyan-400 mb-8" id="m-desc"></p>
+        <button class="px-10 py-3 bg-white text-black font-black rounded-full">继续！</button>
     </div>
 
     <script>
@@ -114,113 +135,68 @@
             });
         }
 
-        // --- 趣味音效 ---
-        function playPop() { playTone(800, 0.05, 0.1, "sine"); setTimeout(() => playTone(1200, 0.02, 0.05, "sine"), 20); }
-        function playBoing(progress) { playTone(200 + (progress * 600), 0.1, 0.02, "triangle"); }
-        function playSparkle() { [1000, 1200, 1500, 1800].forEach((f, i) => setTimeout(() => playTone(f, 0.2, 0.05, "sine"), i * 50)); }
-
-        function playTone(freq, duration, vol, type="sine") {
-            if(!audioCtx) return;
-            const osc = audioCtx.createOscillator();
-            const gain = audioCtx.createGain();
-            osc.type = type; osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
-            gain.gain.setValueAtTime(vol, audioCtx.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
-            osc.connect(gain); gain.connect(audioCtx.destination);
-            osc.start(); osc.stop(audioCtx.currentTime + duration);
-        }
-
-        function playSummerBGM() {
-            const melody = [659.25, 659.25, 659.25, 523.25, 659.25, 783.99, 392.00, 523.25, 440.00, 392.00, 349.23, 329.63, 261.63];
-            let i = 0;
-            setInterval(() => {
-                playTone(melody[i % melody.length], 0.8, 0.02, "sine");
-                if(i % 2 === 0) playTone(150, 0.05, 0.01, "sine");
-                i++;
-            }, 500);
-        }
-
-        // --- 数据库 ---
-        const database = [
-            { icon: "🧠", bio: "聪明的大脑", ai: "身体总司令", fact: "它管着你所有的想法！AI就在学大脑聪明的办法哦。", secret: "Genos看到，有些神奇的小开关能让你学得飞快！", glow: "#C4B5FD" },
-            { icon: "👁️", bio: "明亮的眼睛", ai: "超级摄像机", fact: "眼睛能看清全世界的美丽。它像摄像机一样把照片传给大脑。", secret: "魔法放大镜发现，你DNA里的开关决定了眼睛亮不亮！", glow: "#A5F3FC" },
-            { icon: "👂", bio: "灵敏的耳朵", ai: "声音小喇叭", fact: "听见风声、雨声和妈妈的说话声。它是声音的翻译官。", secret: "Genos发现，有些人的耳朵里藏着‘音乐家的魔法’。", glow: "#F9A8D4" },
-            { icon: "👅", bio: "调皮的舌头", ai: "味道测试仪", fact: "告诉你什么是甜的，什么是咸的。帮你不吃错东西。", secret: "DNA这支画笔，决定了你喜不喜欢吃冰淇淋！", glow: "#D9F99D" },
-            { icon: "🖐️", bio: "温柔的小手", ai: "触觉感应器", fact: "手能摸出软软的云朵和硬硬的石头。它是感觉的专家。", secret: "手巧的小朋友，是因为DNA里的‘艺术家开关’打开啦！", glow: "#FDBA74" },
-            { icon: "❤️", bio: "爱跳的心脏", ai: "能量充电站", fact: "它每天都在咚咚跳给全身送能量。它是英雄。", secret: "有些人节电开关厉害，运动也不累。", glow: "#FF8787" },
-            { icon: "💪", bio: "有力小肌肉", ai: "超人小马达", fact: "你想动哪里，肌肉就帮哪里干活。AI机器人也是这样动的。", secret: "跑得快的小朋友DNA里有马达！", glow: "#FDE68A" },
-            { icon: "🩸", bio: "红红的血液", ai: "生命小火车", fact: "它在身体里跑来跑去，给每一个小细胞送好吃的和氧气。", secret: "火车跑得越稳，身体感觉就有劲儿！", glow: "#FCA5A5" },
-            { icon: "🦴", bio: "硬硬的骨头", ai: "身体的小架子", fact: "骨头撑起你的身体，像搭积木一样把你搭得高高的。", secret: "魔法开关决定了你的小架子什么时候会长得特别快！", glow: "#E2E8F0" },
-            { icon: "🛡️", bio: "勇敢小卫兵", ai: "病毒小盾牌", fact: "它们在身体里巡逻，把调皮的坏蛋病毒全都赶跑！", secret: "Genos发现，多喝水、多运动能让这些卫兵更强壮哦。", glow: "#93C5FD" },
-            { icon: "🔋", bio: "甜甜的觉觉", ai: "超级充电模式", fact: "睡觉的时候，大脑在偷偷整理白天学到的新本事哦！", secret: "爱睡觉不是懒，是在给大脑‘升级软件’，睡醒变聪明！", glow: "#C084FC" },
-            { icon: "👶", bio: "慢慢长大", ai: "系统更新", fact: "你每天都长高一点点，那是身体在下载新的‘成长包’。", secret: "Genos一直在看你，发现你每天都在变得更棒！", glow: "#FED7AA" },
-            { icon: "🍌", bio: "香蕉好朋友", ai: "共有的小秘密", fact: "原来你和香蕉是一半的‘亲戚’！因为你们都要喝水呼吸。", secret: "这说明地球上的生命，大家都共用一些好玩的秘密！", glow: "#FEF08A" },
-            { icon: "🐱", bio: "灵敏的小猫", ai: "反应小冠军", fact: "你和小猫的秘密有90%是一样的。难怪你也这么机灵！", secret: "Genos正在找，为什么人会说话、而猫咪只会喵喵叫。", glow: "#BFDBFE" },
-            { icon: "🦍", bio: "猩猩邻居", ai: "特别像的本子", fact: "猩猩和你特别像！咱们都是大自然里的‘聪明宝贝’。", secret: "Genos发现，剩下的那1%小秘密，让你学会了写字画画。", glow: "#E2E8F0" },
-            { icon: "🌳", bio: "绿绿的大树", ai: "大家的网络", fact: "大树和我们也是朋友，它把好空气送给我们，咱们一起长大。", secret: "在大森林里，你的身体‘代码’运行最开心！", glow: "#BBF7D0" },
-            { icon: "🦠", bio: "坏蛋小病毒", ai: "捣乱的小怪兽", fact: "总有小怪兽想弄坏你的DNA，但别怕，你的卫兵会保护你。", secret: "正在教身体，怎么做一个最厉害的‘终极盾牌’。", glow: "#F87171" },
-            { icon: "🧬", bio: "生命磁带", ai: "超级硬盘", fact: "它记着你出生的所有秘密。它是大宝库！", secret: "Genos读超级长的磁带，寻找变勇敢的秘密。", glow: "#FDA4AF" },
-            { icon: "🕸️", bio: "神奇的神经", ai: "消息快递员", fact: "消息跑得比风还快！脚趾头碰了一下，大脑瞬间就知道啦。", secret: "Genos看到，‘千里眼开关’决定了消息跑得有多快。", glow: "#86EFAC" },
-            { icon: "🌬️", bio: "大口呼吸", ai: "氧气补给包", fact: "深呼吸一口，全身都有力气啦！这是在加油呢。", secret: "Genos看到，爱运动的小朋友，氧气补给包都特别大！", glow: "#99F6E4" },
-            { icon: "🧩", bio: "生命大拼图", ai: "变聪明的办法", fact: "经过了三亿年，咱们才拼成现在这么完美的自己哦！", secret: "你就是这套‘最强办法’的最厉害的小主人！", glow: "#A5B4FC" },
-            { icon: "✨", bio: "唯一的你", ai: "最棒的原创", fact: "没有任何人跟你完全一样。你是奇迹。", secret: "未来的你会创造出多么伟大的奇迹！", glow: "#FFF" }
-        ];
-
-        const field = document.getElementById('treasure-field');
-        const shelf = document.getElementById('collection-shelf');
-        const overlay = document.getElementById('flashlight-overlay');
-        let unlockedCount = 0; let activeIndex = -1; let unlockTimer = null; let boingInterval = null;
-
-        database.forEach((_, i) => {
-            const slot = document.createElement('div');
-            slot.className = "shelf-slot"; slot.id = `slot-${i}`;
-            shelf.appendChild(slot);
-        });
-
+        // --- 核心适配算法：绝对全屏安全区 ---
         function distributeTreasures() {
+            const field = document.getElementById('treasure-field');
             field.innerHTML = '';
             const w = window.innerWidth; const h = window.innerHeight;
-            const safeW = w - 100; const safeH = h - 250;
+            
+            // 计算安全区域
+            const topGap = 120 + (parseInt(getComputedStyle(document.documentElement).getPropertyValue('--sat')) || 0);
+            const bottomGap = 150 + (parseInt(getComputedStyle(document.documentElement).getPropertyValue('--sab')) || 0);
+            const sideGap = 40;
+
             database.forEach((item, index) => {
                 const container = document.createElement('div');
                 container.className = "treasure-container"; container.id = `treasure-${index}`;
-                container.style.left = (50 + Math.random() * (safeW - 50)) + 'px';
-                container.style.top = (150 + Math.random() * (safeH - 150)) + 'px';
+                
+                // 确保圆心和边缘绝不超出屏幕
+                const x = sideGap + Math.random() * (w - sideGap * 2 - 60);
+                const y = topGap + Math.random() * (h - topGap - bottomGap - 60);
+                
+                container.style.left = x + 'px';
+                container.style.top = y + 'px';
                 container.style.setProperty('--glow', item.glow);
+                
                 container.innerHTML = `
                     <svg class="progress-ring" viewBox="0 0 120 120"><circle cx="60" cy="60" r="40"></circle></svg>
                     <div class="treasure-icon">${item.icon}</div>
                     <div class="info-bubble">
                         <div class="flex justify-between items-center mb-2">
-                            <span class="text-[10px] font-black" style="color:${item.glow}">#${item.bio}</span>
-                            <span class="text-[8px] text-gray-500 font-bold">助手: ${item.ai}</span>
+                            <span class="text-[9px] font-black" style="color:${item.glow}">#${item.bio}</span>
+                            <span class="text-[8px] text-gray-500 font-bold uppercase">助手: ${item.ai}</span>
                         </div>
-                        <p class="text-[12px] text-gray-200 leading-normal mb-2">${item.fact}</p>
-                        <div class="pt-2 border-t border-white/10 text-[9px] text-cyan-400 italic">⭐ 魔法秘密: ${item.secret}</div>
+                        <p class="text-[11px] text-gray-200 leading-tight mb-2">${item.fact}</p>
+                        <div class="pt-2 border-t border-white/10 text-[8px] text-cyan-400 italic">⭐ 魔法秘密: ${item.secret}</div>
                     </div>
                 `;
                 field.appendChild(container);
             });
         }
 
+        // --- 交互与音效逻辑 ---
         const handleAction = (x, y) => {
+            const overlay = document.getElementById('flashlight-overlay');
             overlay.style.setProperty('--x', x + 'px');
             overlay.style.setProperty('--y', y + 'px');
+
             let match = -1;
-            document.querySelectorAll('.treasure-container').forEach((c, idx) => {
+            const all = document.querySelectorAll('.treasure-container');
+            all.forEach((c, idx) => {
                 if(c.classList.contains('unlocked')) return;
                 const r = c.getBoundingClientRect();
-                if(Math.hypot(x - (r.left + r.width/2), y - (r.top + r.height/2)) < 50) match = idx;
+                const cx = r.left + r.width/2; const cy = r.top + r.height/2;
+                if(Math.hypot(x - cx, y - cy) < 50) match = idx;
             });
+
             if(match !== activeIndex) {
                 document.querySelectorAll('.treasure-container').forEach(c => c.classList.remove('active', 'loading'));
-                clearTimeout(unlockTimer); clearInterval(boingInterval);
+                clearTimeout(unlockTimer);
                 if(match !== -1) {
                     const t = document.getElementById(`treasure-${match}`);
                     t.classList.add('active');
                     setTimeout(() => t.classList.add('loading'), 100);
-                    playPop();
-                    let step = 0; boingInterval = setInterval(() => { playBoing(step/30); step++; }, 100);
+                    playTone(600, 0.1, 0.05); // 锁定音
                     unlockTimer = setTimeout(() => unlock(match), 3100);
                     overlay.style.background = `radial-gradient(circle 120px at var(--x) var(--y), transparent 0%, ${database[match].glow}22 40%, rgba(2, 6, 23, 0.98) 100%)`;
                 } else {
@@ -230,32 +206,68 @@
             }
         };
 
-        document.addEventListener('mousemove', (e) => handleAction(e.clientX, e.clientY));
-        document.addEventListener('touchmove', (e) => handleAction(e.touches[0].clientX, e.touches[0].clientY));
+        // 事件监听
+        window.addEventListener('mousemove', (e) => handleAction(e.clientX, e.clientY));
+        window.addEventListener('touchmove', (e) => {
+            const t = e.touches[0]; handleAction(t.clientX, t.clientY);
+        }, { passive: false });
 
         function unlock(idx) {
             const t = document.getElementById(`treasure-${idx}`);
-            if(!t) return;
             t.classList.add('unlocked');
-            document.getElementById(`slot-${idx}`).innerHTML = database[idx].icon;
-            document.getElementById(`slot-${idx}`).classList.add('filled');
+            const slot = document.getElementById(`slot-${idx}`);
+            slot.innerHTML = database[idx].icon;
+            slot.classList.add('filled');
+            
+            // 自动滚动到底部收集区域的最新位置
+            const container = document.getElementById('collection-container');
+            container.scrollLeft = slot.offsetLeft - 100;
+
             unlockedCount++;
-            document.getElementById('progress-val').innerText = unlockedCount + "/22";
-            clearInterval(boingInterval);
-            playSparkle();
+            document.getElementById('progress-val').innerText = `DECODED: ${unlockedCount}/22`;
+            playTone(880, 0.3, 0.1); // 成功音
+            if (navigator.vibrate) navigator.vibrate([30, 30, 30]);
             checkMilestone();
         }
 
-        function checkMilestone() {
-            const ms = [{ count: 5, title: "超级小助手！", desc: "发现了 5 个魔法秘密，身体基地亮起来啦！" }, { count: 10, title: "魔法科学家！", desc: "10 个秘密！你对 AI 小伙伴了解太深了！" }, { count: 15, title: "金牌解码员！", desc: "Genos 魔法放大镜为你骄傲！" }, { count: 22, title: "身体小主人！", desc: "恭喜！你点亮了所有生命星图！" }];
-            const m = ms.find(m => m.count === unlockedCount);
-            if(m) {
-                document.getElementById('m-title').innerText = m.title;
-                document.getElementById('m-desc').innerText = m.desc;
-                document.getElementById('milestone-modal').style.display = 'flex';
-                playTone(523, "square", 0.5, 0.1);
-            }
-        }
+        // --- 初始化数据库与 UI ---
+        const database = [
+            { icon: "🧠", bio: "聪明的大脑", ai: "身体总司令", fact: "它管着你所有的想法！AI就在学大脑聪明的办法哦。", secret: "Genos看到小开关能让你学得飞快！", glow: "#C4B5FD" },
+            { icon: "👁️", bio: "明亮的眼睛", ai: "超级摄像机", fact: "眼睛能看清全世界的美丽。它像摄像机一样把照片传给大脑。", secret: "开关决定了你的眼睛亮不亮！", glow: "#A5F3FC" },
+            { icon: "👂", bio: "灵敏的耳朵", ai: "声音小喇叭", fact: "它能听见风声雨声。它是声音的翻译官。", secret: "耳朵里藏着音乐家的魔法。", glow: "#F9A8D4" },
+            { icon: "👅", bio: "调皮的舌头", ai: "味道测试仪", fact: "告诉你什么是甜的，什么是咸的。不吃错东西。", secret: "画笔决定了你喜不喜欢吃冰淇淋！", glow: "#D9F99D" },
+            { icon: "🖐️", bio: "温柔的小手", ai: "触觉感应器", fact: "手能摸出软软的云朵和硬硬的石头。它是感觉的专家。", secret: "艺术家开关让你的手变得超级巧！", glow: "#FDBA74" },
+            { icon: "❤️", bio: "爱跳的心脏", ai: "能量充电站", fact: "它每天都在咚咚跳送能量。它是永远不休息的英雄。", secret: "有些人节电开关厉害，运动也不累。", glow: "#FF8787" },
+            { icon: "💪", bio: "有力小肌肉", ai: "超人小马达", fact: "你想动哪里，肌肉就帮哪里干活。AI机器人也是这样。", secret: "跑得快的小朋友，DNA里有马达！", glow: "#FDE68A" },
+            { icon: "🩸", bio: "红红的血液", ai: "生命小火车", fact: "它在身体里跑来跑去，给每一个小细胞送好吃的和氧气。", secret: "火车跑得越稳，身体感觉就有劲儿！", glow: "#FCA5A5" },
+            { icon: "🦴", bio: "硬硬的骨头", ai: "身体的小架子", fact: "骨头撑起你的身体，像搭积木一样把你搭得高高的。", secret: "魔法开关决定架子什么时候会长得快！", glow: "#E2E8F0" },
+            { icon: "🛡️", bio: "勇敢小卫兵", ai: "病毒小盾牌", fact: "它们在身体里巡逻，把调皮的坏蛋病毒全赶跑！", secret: "多喝水、多运动让卫兵更强壮。", glow: "#93C5FD" },
+            { icon: "🔋", bio: "甜甜的觉觉", ai: "超级充电模式", fact: "睡觉的时候，大脑在偷偷整理白天学到的新本事哦！", secret: "睡觉是在升级软件，睡醒变聪明！", glow: "#C084FC" },
+            { icon: "👶", bio: "慢慢长大", ai: "系统更新", fact: "每天长高一点点，在下载新的成长包。", secret: "你每天都在变得更棒！", glow: "#FED7AA" },
+            { icon: "🍌", bio: "香蕉好朋友", ai: "共有的小秘密", fact: "原来你和香蕉是一半的亲戚！都要喝水呼吸。", secret: "生命大家都共用一些好玩的秘密！", glow: "#FEF08A" },
+            { icon: "🐱", bio: "灵敏的小猫", ai: "反应小冠军", fact: "你和小猫的秘密有90%是一样的。你也机灵！", secret: "找为什么人会说话、猫只会喵喵。", glow: "#BFDBFE" },
+            { icon: "🦍", bio: "猩猩邻居", ai: "特别像的本子", fact: "猩猩和你特别像！咱们都是聪明宝贝。", secret: "剩下的那1%让你学会了写字画画。", glow: "#E2E8F0" },
+            { icon: "🌳", bio: "绿绿的大树", ai: "大家的网络", fact: "大树是我们的朋友，给咱们新鲜空气。", secret: "在大森林里，身体代码运行最开心！", glow: "#BBF7D0" },
+            { icon: "🦠", bio: "坏蛋小病毒", ai: "捣乱的小怪兽", fact: "总有小怪兽想弄坏你，但卫兵会保护你。", secret: "正在教身体做一个终极盾牌。", glow: "#F87171" },
+            { icon: "🧬", bio: "生命磁带", ai: "超级硬盘", fact: "它记着你出生的秘密。它是大宝库！", secret: "Genos读磁带寻找变勇敢的秘密。", glow: "#FDA4AF" },
+            { icon: "🕸️", bio: "神奇的神经", ai: "消息快递员", fact: "消息跑得比风还快！脚趾头碰了一下秒知道。", secret: "千里眼开关决定了消息跑多快。", glow: "#86EFAC" },
+            { icon: "🌬️", bio: "大口呼吸", ai: "氧气补给包", fact: "吸一口全身有力气！这是在加油呢。", secret: "爱运动的小朋友补给包特别大！", glow: "#99F6E4" },
+            { icon: "🧩", bio: "生命大拼图", ai: "变聪明办法", fact: "三亿年拼成了现在完美的你！你是小主人！", secret: "你是这套办法的最厉害继承者。", glow: "#A5B4FC" },
+            { icon: "✨", bio: "唯一的你", ai: "最棒的原创", fact: "没有任何人跟你一样。你是宇宙的奇迹。", secret: "未来的你会创造出多么伟大的奇迹！", glow: "#FFF" }
+        ];
+
+        const collContainer = document.getElementById('collection-container');
+        database.forEach((_, i) => {
+            const slot = document.createElement('div');
+            slot.className = "map-slot"; slot.id = `slot-${i}`;
+            collContainer.appendChild(slot);
+        });
+
+        let activeIndex = -1; let unlockTimer = null;
+        function playTone(f, d, v) { if(!audioCtx) return; const o=audioCtx.createOscillator(), g=audioCtx.createGain(); o.type="sine"; o.frequency.setValueAtTime(f, audioCtx.currentTime); g.gain.setValueAtTime(v, audioCtx.currentTime); g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime+d); o.connect(g); g.connect(audioCtx.destination); o.start(); o.stop(audioCtx.currentTime+d); }
+        function playSummerBGM() { const m=[659, 659, 659, 523, 659, 783, 392, 523, 440, 392, 349, 330, 262]; let i=0; setInterval(() => { playTone(m[i%m.length], 0.8, 0.02); i++; }, 500); }
+        function checkMilestone() { const ms=[{c:5,t:"初级破译员"},{c:10,t:"高级探险家"},{c:15,t:"金牌架构师"},{c:22,t:"生命大师"}]; const m=ms.find(x=>x.c===unlockedCount); if(m){ document.getElementById('m-title').innerText=m.t; document.getElementById('m-desc').innerText=`发现了 ${m.c} 个秘密！`; document.getElementById('milestone-modal').style.display='flex'; } }
+        window.addEventListener('resize', distributeTreasures);
     </script>
 </body>
 </html>
