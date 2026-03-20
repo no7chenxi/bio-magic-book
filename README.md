@@ -19,4 +19,4 @@
 本项目是基于 **BGI-Research & 浙江实验室** 发布的 **Genos 基因组大模型** 技术理念开发的科普教育演示。通过模拟微观世界的探索，让孩子从小理解“远端调控”和“生命代码”的神奇。
 
 ---
-Created by [Your Name/July] | 2026 
+Created by no7chenxi | 2026 
