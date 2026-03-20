@@ -4,29 +4,35 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Genos 魔法书 | 智能引导版</title>
+    <title>Genos 魔法书 | 终极荣誉版</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         :root { --sat: env(safe-area-inset-top); --sab: env(safe-area-inset-bottom); }
-        @keyframes float-slow { 0%, 100% { transform: translate(0, 0); } 50% { transform: translate(10px, -10px); } }
+        @keyframes float-slow { 0%, 100% { transform: translate(0, 0); } 50% { transform: translate(10px, -15px); } }
         @keyframes hand-guide { 0% { transform: translate(-50px, 50px); opacity: 0; } 20% { opacity: 1; } 50% { transform: translate(0, 0); } 80% { opacity: 1; } 100% { transform: translate(0, 0); opacity: 0; } }
         @keyframes hint-pulse { 0%, 100% { transform: scale(1); filter: grayscale(1) opacity(0.15); } 50% { transform: scale(1.3); filter: grayscale(0) opacity(0.8); } }
+        @keyframes crosshair-lock { 0% { transform: translate(-50%, -50%) scale(1); opacity: 0.3; } 50% { transform: translate(-50%, -50%) scale(1.5); opacity: 1; } 100% { transform: translate(-50%, -50%) scale(1.2); opacity: 0.8; } }
+        @keyframes fireworks { 0% { transform: scale(0); opacity: 1; } 100% { transform: scale(4); opacity: 0; } }
         
         body { background: #020617; color: #F1F5F9; margin: 0; height: 100dvh; width: 100vw; overflow: hidden; font-family: system-ui, sans-serif; touch-action: none; position: fixed; }
         #flashlight-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: radial-gradient(circle 90px at var(--x) var(--y), transparent 0%, rgba(2, 6, 23, 0.98) 100%); pointer-events: none; z-index: 50; }
         
-        /* 准星十字架 */
-        #flashlight-overlay::after { content: '+'; position: absolute; left: var(--x); top: var(--y); transform: translate(-50%, -50%); color: rgba(34, 211, 238, 0.3); font-size: 20px; font-weight: 100; }
+        /* 增强版准星 */
+        .crosshair {
+            position: absolute; left: var(--x); top: var(--y); transform: translate(-50%, -50%);
+            width: 40px; height: 40px; border: 2px solid rgba(34, 211, 238, 0.3); border-radius: 50%;
+            display: flex; align-items: center; justify-content: center; pointer-events: none;
+        }
+        .crosshair::before { content: ''; position: absolute; width: 2px; height: 20px; background: rgba(34, 211, 238, 0.5); }
+        .crosshair::after { content: ''; position: absolute; width: 20px; height: 2px; background: rgba(34, 211, 238, 0.5); }
+        .crosshair.lock { border-color: #22D3EE; animation: crosshair-lock 0.3s forwards; box-shadow: 0 0 20px #22D3EE; }
 
         .treasure-container { position: absolute; width: 80px; height: 80px; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1); animation: float-slow 10s ease-in-out infinite; z-index: 10; }
         .treasure-icon { font-size: 2.2rem; filter: grayscale(1) opacity(0.15); transition: 0.3s; }
-        
-        /* 附近的提示跳动 */
         .treasure-container.hint { animation: hint-pulse 1s infinite !important; }
-
         .treasure-container.active { z-index: 60; transform: scale(2.5) translateY(-40px) !important; }
-        .treasure-container.active .treasure-icon { filter: grayscale(0) opacity(1) drop-shadow(0 0 15px var(--glow)); }
-        .treasure-container.unlocked { display: none !important; }
+        .treasure-container.active .treasure-icon { filter: grayscale(0) opacity(1); }
+        .treasure-container.unlocked { opacity: 0; pointer-events: none; transform: scale(0) !important; }
 
         .progress-ring { position: absolute; width: 100px; height: 100px; transform: rotate(-90deg); opacity: 0; }
         .progress-ring circle { fill: transparent; stroke: var(--glow); stroke-width: 6; stroke-dasharray: 251; stroke-dashoffset: 251; transition: stroke-dashoffset 3s linear; }
@@ -41,32 +47,35 @@
         .map-slot { width: 45px; height: 45px; border-radius: 12px; flex-shrink: 0; background: rgba(255,255,255,0.05); border: 1px dashed rgba(34, 211, 238, 0.2); display: flex; align-items: center; justify-content: center; font-size: 1.2rem; opacity: 0.2; transition: 0.5s; }
         .map-slot.filled { background: rgba(34, 211, 238, 0.15); border-style: solid; opacity: 1; transform: scale(1.1); }
 
-        .fly-icon { position: fixed; z-index: 1000; font-size: 2.5rem; pointer-events: none; transition: all 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
-
-        /* 新手引导手势 */
-        #guide-hand {
-            position: fixed; left: 50%; top: 50%; z-index: 200; pointer-events: none;
-            display: none; flex-direction: column; align-items: center;
+        /* 总结星图 */
+        #final-constellation {
+            position: fixed; inset: 0; z-index: 300; background: #020617; 
+            display: none; flex-direction: column; align-items: center; justify-content: center;
+            animation: fadeIn 1s forwards;
         }
+        .constellation-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 15px; max-width: 320px; margin-bottom: 40px; }
+        .final-hero-card { background: linear-gradient(135deg, #1E293B, #0F172A); border: 3px solid #22D3EE; padding: 30px; border-radius: 40px; text-align: center; box-shadow: 0 0 50px rgba(34, 211, 238, 0.3); }
+
+        .fly-icon { position: fixed; z-index: 1000; font-size: 2.5rem; pointer-events: none; transition: all 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        #guide-hand { position: fixed; left: 50%; top: 50%; z-index: 200; pointer-events: none; display: none; flex-direction: column; align-items: center; }
         .hand-icon { font-size: 3rem; animation: hand-guide 3s infinite; }
-        .hand-text { background: #22D3EE; color: #000; padding: 4px 12px; border-radius: 99px; font-size: 12px; font-weight: 900; margin-top: 10px; }
     </style>
 </head>
 <body>
-    <div id="flashlight-overlay"></div>
-
-    <!-- 引导手势 -->
-    <div id="guide-hand">
-        <div class="hand-icon">👆</div>
-        <div class="hand-text">拖动光圈来瞄准</div>
+    <div id="flashlight-overlay">
+        <div id="crosshair" class="crosshair"></div>
     </div>
+
+    <!-- 引导 -->
+    <div id="guide-hand"><div class="hand-icon">👆</div><div class="bg-cyan-500 text-black px-4 py-1 rounded-full text-xs font-black mt-2">拖动准星瞄准</div></div>
 
     <div id="sound-init" class="fixed inset-0 z-[1000] bg-[#020617] flex flex-col items-center justify-center text-center p-8">
-        <div class="text-6xl mb-6">🚀</div>
-        <h2 class="text-3xl font-black mb-10 text-cyan-400 italic">BODY MAGIC</h2>
-        <button onclick="initApp()" class="px-16 py-5 bg-white text-black font-black rounded-full text-xl shadow-[0_0_50px_rgba(255,255,255,0.3)]">开始探索</button>
+        <div class="text-6xl mb-6">🏆</div>
+        <h2 class="text-3xl font-black mb-10 text-cyan-400 italic">BODY MAGIC 2.0</h2>
+        <button onclick="initApp()" class="px-16 py-5 bg-white text-black font-black rounded-full text-xl">开启荣誉探险</button>
     </div>
 
+    <!-- 顶部状态 -->
     <div class="fixed top-[calc(20px+var(--sat))] left-6 right-6 z-[150] flex justify-between items-start pointer-events-none">
         <h1 class="text-2xl font-black italic text-cyan-400 tracking-tighter">身体<span class="text-white">魔法书</span></h1>
         <div id="progress-val" class="text-xl font-black text-cyan-500">0/22</div>
@@ -77,8 +86,20 @@
     <div id="treasure-field" class="relative w-full h-full"></div>
     <div id="map-panel"></div>
 
+    <!-- 终极荣誉总结页 -->
+    <div id="final-constellation">
+        <div class="final-hero-card">
+            <div class="text-6xl mb-4">👑</div>
+            <h2 class="text-3xl font-black text-white mb-2">生命代码大师！</h2>
+            <p class="text-cyan-400 text-sm mb-8 italic">你已成功破译 22 个微观奇迹</p>
+            <div class="constellation-grid" id="final-grid"></div>
+            <p class="text-xs text-gray-500 mb-8 leading-relaxed">你是这颗星球上最独特、最聪明的 AI 驱动生物。<br>每一个细胞都在为你鼓掌！</p>
+            <button onclick="location.reload()" class="bg-cyan-500 text-black px-10 py-3 rounded-full font-black uppercase text-xs">再次大探险</button>
+        </div>
+    </div>
+
     <div id="milestone-modal" class="fixed inset-0 bg-black/95 hidden flex-col items-center justify-center z-[200] text-center p-10" onclick="this.style.display='none'">
-        <div class="text-8xl mb-6">🏅</div><h2 class="text-3xl font-black text-white mb-2 italic" id="m-title"></h2><p class="text-lg text-cyan-400 mb-8" id="m-desc"></p><button class="px-10 py-3 bg-white text-black font-black rounded-full">继续！</button>
+        <div class="text-8xl mb-6">🎖️</div><h2 class="text-3xl font-black text-white mb-2 italic" id="m-title"></h2><p class="text-lg text-cyan-400 mb-8" id="m-desc"></p><button class="px-10 py-3 bg-white text-black font-black rounded-full">继续！</button>
     </div>
 
     <script>
@@ -88,10 +109,10 @@
             { icon: "👂", bio: "灵敏的耳朵", ai: "声音小喇叭", fact: "它能听见风声雨声。它是声音的翻译官。", secret: "Genos发现有些人的耳朵里藏着魔法。", glow: "#F9A8D4" },
             { icon: "👅", bio: "调皮的舌头", ai: "味道测试仪", fact: "告诉你什么是甜的、什么是咸的。不吃错东西。", secret: "DNA决定了你喜不喜欢吃冰淇淋！", glow: "#D9F99D" },
             { icon: "🖐️", bio: "温柔的小手", ai: "感应器", fact: "手能摸出软软的云朵。它是感觉的专家。", secret: "手巧的小朋友开关早已打开啦！", glow: "#FDBA74" },
-            { icon: "❤️", bio: "爱跳的心脏", ai: "能量充电站", fact: "咚咚跳给全身送能量。它是永远不休息的英雄。", secret: "有些人节电开关厉害，怎么运动也不累。", glow: "#FF8787" },
+            { icon: "❤️", bio: "爱跳的心脏", ai: "能量充电站", fact: "它每天都在咚咚跳给全身送能量。它是英雄。", secret: "有些人节电开关厉害，怎么运动也不累。", glow: "#FF8787" },
             { icon: "💪", bio: "有力小肌肉", ai: "超人小马达", fact: "你想动哪里肌肉就干活。AI机器人也是这样。", secret: "跑得快的小朋友，DNA里有超强马达！", glow: "#FDE68A" },
-            { icon: "🩸", bio: "红红的血液", ai: "生命小火车", fact: "它给每一个小细胞送氧气。它是最忙的快递员。", secret: "火车跑得稳，身体感觉就有劲儿！", glow: "#FCA5A5" },
-            { icon: "🦴", bio: "硬硬的骨头", ai: "身体的小架子", fact: "骨头撑起你的身体，像搭积木一样把你搭得高高。", secret: "开关决定了你的架子什么时候长得快！", glow: "#E2E8F0" },
+            { icon: "🩸", bio: "红红的血液", ai: "生命小火车", fact: "它给每一个小细胞送氧气。它是最忙的快递员。", secret: "火车跑得越稳，身体感觉就有劲儿！", glow: "#FCA5A5" },
+            { icon: "🦴", bio: "硬硬的骨头", ai: "身体的小架子", fact: "骨头撑起你的身体，像搭积木一样把你搭高高。", secret: "魔法开关决定了你的架子什么时候长得快！", glow: "#E2E8F0" },
             { icon: "🛡️", bio: "勇敢小卫兵", ai: "病毒小盾牌", fact: "在身体里巡逻，把调皮的坏蛋病毒全赶跑！", secret: "Genos发现，多喝水、多运动让卫兵更强壮。", glow: "#93C5FD" },
             { icon: "🔋", bio: "甜甜的觉觉", ai: "超级充电", fact: "睡觉时大脑在整理白天学到的新本事呢！", secret: "爱睡觉不是懒，是在给大脑升级软件！", glow: "#C084FC" },
             { icon: "👶", bio: "慢慢长大", ai: "系统更新", fact: "每天长高一点点，在下载新的成长包。", secret: "Genos发现你每天都在变得更棒！", glow: "#FED7AA" },
@@ -99,12 +120,12 @@
             { icon: "🐱", bio: "灵敏的小猫", ai: "反应小冠军", fact: "你和猫秘密有90%是一样的。你也机灵！", secret: "找为什么人会说话、猫只会喵喵叫。", glow: "#BFDBFE" },
             { icon: "🦍", bio: "猩猩邻居", ai: "测试版代码", fact: "猩猩和你特别像！咱们都是聪明宝贝。", secret: "那剩下的1%秘密让你学会了写字画画。", glow: "#E2E8F0" },
             { icon: "🌳", bio: "绿绿的大树", ai: "大家的大网", fact: "大树是我们的朋友，给咱们新鲜空气。", secret: "在大森林里，你的身体运行最开心！", glow: "#BBF7D0" },
-            { icon: "🦠", bio: "坏蛋小病毒", ai: "捣乱小怪兽", fact: "想弄坏你，但别怕，卫兵会保护你。", secret: "正在教身体做一个终极盾牌。", glow: "#F87171" },
+            { icon: "🦠", bio: "坏蛋小病毒", ai: "捣乱的小怪兽", fact: "想弄坏你，但别怕，卫兵会保护你。", secret: "正在教身体做一个终极盾牌。", glow: "#F87171" },
             { icon: "🧬", bio: "生命磁带", ai: "超级硬盘", fact: "记着出生的秘密。它是宇宙最大的宝库！", secret: "Genos正在读这根磁带，寻找秘密。", glow: "#FDA4AF" },
             { icon: "🕸️", bio: "神奇的神经", ai: "消息快递员", fact: "消息跑得比风快！脚尖碰了下秒知道。", secret: "远端开关决定了消息跑多快。", glow: "#86EFAC" },
             { icon: "🌬️", bio: "大口呼吸", ai: "补给包", fact: "深呼吸一口全身有力气！这是在加油。", secret: "爱运动的小朋友补给包特别大！", glow: "#99F6E4" },
             { icon: "🧩", bio: "生命大拼图", ai: "变聪明办法", fact: "经过三亿年，才拼成现在完美的你！", secret: "你是这套最强办法的厉害小主人！", glow: "#A5B4FC" },
-            { icon: "✨", bio: "唯一的你", ai: "原创逻辑", fact: "你是宇宙中独一无二的宝贝，没人和你一样。", secret: "未来你会创造出多么伟大的奇迹！", glow: "#FFF" }
+            { icon: "✨", bio: "唯一的你", ai: "原创逻辑", fact: "你是宇宙中独一无二提宝贝，没人和你一样。", secret: "未来你会创造出多么伟大的奇迹！", glow: "#FFF" }
         ];
 
         let audioCtx, unlockedCount = 0, activeIndex = -1, unlockTimer;
@@ -113,25 +134,20 @@
             audioCtx = new (window.AudioContext || window.webkitAudioContext)();
             audioCtx.resume().then(() => {
                 document.getElementById('sound-init').style.display = 'none';
-                playSummerBGM();
-                setupMap();
-                distribute();
-                showGuide(); // 启动引导
+                playSummerBGM(); setupMap(); distribute(); showGuide();
             });
         }
 
         function showGuide() {
             const hand = document.getElementById('guide-hand');
-            hand.style.display = 'flex';
-            setTimeout(() => { hand.style.display = 'none'; }, 6000);
+            hand.style.display = 'flex'; setTimeout(() => { hand.style.display = 'none'; }, 6000);
         }
 
         function setupMap() {
             const panel = document.getElementById('map-panel');
             for(let i=0; i<22; i++) {
                 const slot = document.createElement('div');
-                slot.className = "map-slot"; slot.id = `slot-${i}`;
-                panel.appendChild(slot);
+                slot.className = "map-slot"; slot.id = `slot-${i}`; panel.appendChild(slot);
             }
         }
 
@@ -152,28 +168,27 @@
 
         const handleMove = (x, y) => {
             const overlay = document.getElementById('flashlight-overlay');
+            const crosshair = document.getElementById('crosshair');
             overlay.style.setProperty('--x', x + 'px'); overlay.style.setProperty('--y', y + 'px');
             let match = -1;
             document.querySelectorAll('.treasure-container').forEach((c, idx) => {
                 if(c.classList.contains('unlocked')) return;
                 const r = c.getBoundingClientRect();
                 const dist = Math.hypot(x - (r.left + r.width/2), y - (r.top + r.height/2));
-                
-                // 呼吸提示逻辑：如果在 150px 范围内，显示跳动提示
-                if(dist < 150 && dist >= 80) c.classList.add('hint');
-                else c.classList.remove('hint');
-
+                if(dist < 150 && dist >= 80) c.classList.add('hint'); else c.classList.remove('hint');
                 if(dist < 80) match = idx;
             });
 
             if(match !== activeIndex) {
                 document.querySelectorAll('.treasure-container').forEach(c => c.classList.remove('active', 'loading'));
                 document.getElementById('info-card').classList.remove('visible');
+                crosshair.classList.remove('lock');
                 clearTimeout(unlockTimer);
                 if(match !== -1) {
                     const t = document.getElementById(`treasure-${match}`);
                     const d = database[match];
                     t.classList.add('active'); setTimeout(() => t.classList.add('loading'), 50);
+                    crosshair.classList.add('lock'); // 命中反馈
                     document.getElementById('info-bio').innerText = d.bio;
                     document.getElementById('info-ai').innerText = `AI助手: ${d.ai}`;
                     document.getElementById('info-fact').innerText = d.fact;
@@ -202,12 +217,25 @@
             setTimeout(() => { slot.innerHTML = database[idx].icon; slot.classList.add('filled'); document.getElementById('map-panel').scrollLeft = slot.offsetLeft - 50; fly.remove(); }, 850);
             unlockedCount++; document.getElementById('progress-val').innerText = `${unlockedCount}/22`;
             playTone(880, 0.3, 0.1); if(navigator.vibrate) navigator.vibrate([30,30]);
-            checkMilestone();
+            if(unlockedCount === 22) showFinalConstellation();
+            else checkMilestone();
+        }
+
+        function showFinalConstellation() {
+            const final = document.getElementById('final-constellation');
+            const grid = document.getElementById('final-grid');
+            database.forEach(d => {
+                const icon = document.createElement('div');
+                icon.className = "text-2xl opacity-0"; icon.innerText = d.icon;
+                icon.style.animation = "fadeIn 1s forwards";
+                grid.appendChild(icon);
+            });
+            setTimeout(() => { final.style.display = 'flex'; }, 1500);
         }
 
         function playTone(f, d, v) { if(!audioCtx) return; const o=audioCtx.createOscillator(), g=audioCtx.createGain(); o.type="sine"; o.frequency.setValueAtTime(f, audioCtx.currentTime); g.gain.setValueAtTime(v, audioCtx.currentTime); g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime+d); o.connect(g); g.connect(audioCtx.destination); o.start(); o.stop(audioCtx.currentTime+d); }
         function playSummerBGM() { const m=[659, 659, 659, 523, 659, 783, 392, 523, 440, 392, 349, 330, 262]; let i=0; setInterval(() => { playTone(m[i%m.length], 0.8, 0.02); i++; }, 500); }
-        function checkMilestone() { const ms=[{c:5,t:"初级破译员"},{c:10,t:"高级探险家"},{c:15,t:"金牌架构师"},{c:22,t:"生命大师"}]; const m=ms.find(x=>x.c===unlockedCount); if(m){ document.getElementById('m-title').innerText=m.t; document.getElementById('m-desc').innerText=`发现了 ${m.c} 个秘密！`; document.getElementById('milestone-modal').style.display='flex'; } }
+        function checkMilestone() { const ms=[{c:5,t:"初级破译员"},{c:10,t:"高级探险家"},{c:15,t:"金牌架构师"}]; const m=ms.find(x=>x.c===unlockedCount); if(m){ document.getElementById('m-title').innerText=m.t; document.getElementById('m-desc').innerText=`发现了 ${m.c} 个秘密！`; document.getElementById('milestone-modal').style.display='flex'; } }
     </script>
 </body>
 </html>
